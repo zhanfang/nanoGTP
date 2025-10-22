@@ -3,6 +3,7 @@ import numpy as np
 import torch
 
 from model import GPT
+from prepare import init_tokenizer
 
 
 class DataLoader:
@@ -38,8 +39,12 @@ def train():
     data_dir = os.path.join('data', 'shakespeare')
     train_data = np.memmap(os.path.join(data_dir, 'train.bin'), dtype=np.uint16, mode='r')
 
+    # 初始化词表并获取实际的词表大小
+    vocab_size = init_tokenizer()
+    print(f"Vocabulary size: {vocab_size}")
+    
     model = GPT(
-        vocab_size=65,
+        vocab_size=vocab_size,
         n_layer=n_layer,
         n_head=n_head,
         n_embd=n_embd,

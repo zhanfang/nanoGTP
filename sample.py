@@ -33,15 +33,13 @@ def main():
     n_layer = 6
     block_size = 256
     
+    # Initialize tokenizer and get vocabulary size
+    vocab_size = init_tokenizer()
+    print(f'Actual vocabulary size from text: {vocab_size}')
+    
     # Set up device
     device = 'mps' if torch.mps.is_available() else 'cpu'
     print(f'Using device: {device}')
-    
-    # Use the same vocabulary size as the trained model
-    vocab_size = 65  # This must match the trained model's vocabulary size
-    _ = init_tokenizer()  # Still initialize the tokenizer for encode/decode
-    
-    print(_)
     
     # Load the model
     model = GPT(
@@ -52,7 +50,19 @@ def main():
         block_size=block_size,
     ).to(device)
     
-    model.load_state_dict(torch.load('model.pth', map_location=device))
+    # Load the model and check its parameters
+    state_dict = torch.load('model.pth', map_location=device)
+    
+    # Check vocabulary size in the model's embedding layer
+    embedding_size = state_dict['token_embeddings.weight'].shape[0]
+    print(f'Model vocabulary size: {embedding_size}')
+    
+    if embedding_size != vocab_size:
+        print(f'WARNING: Model vocabulary size ({embedding_size}) differs from text vocabulary size ({vocab_size})')
+        print('Adjusting model initialization to match trained model size...')
+        vocab_size = embedding_size
+        
+    model.load_state_dict(state_dict)
     print('Model loaded successfully!')
     
     # Generate text
