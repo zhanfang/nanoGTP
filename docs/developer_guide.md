@@ -97,6 +97,21 @@ The following files appear to be unrelated to the main Shakespeare GPT task, pos
     - **Vocab Size**: 50304 (padded from 50257)
     - **Upgrade**: Run `python prepare.py` to re-encode data with BPE.
 
+7.  **SFT (Supervised Fine-Tuning)**:
+    -   **Prepare Data**:
+        ```bash
+        # Process JSONL data (instruction-response pairs)
+        python data/sft_demo/prepare_sft.py
+        ```
+    -   **Run Finetuning**:
+        ```bash
+        # Finetune the base model
+        python finetune.py
+        ```
+    -   **Output**:
+        -   The finetuned model checkpoint will be saved to `out-sft/ckpt.pt`.
+    -   **Design**: See [SFT Design](sft_design.md) for details.
+
 ## Identified Issues & Improvements
 1.  **[FIXED] Performance Bottleneck in `train.py`**:
     - The `DataLoader` was instantiated inside the training loop, causing the entire dataset to be re-read from disk into memory at every iteration.
