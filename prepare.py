@@ -1,43 +1,30 @@
 import os
 import numpy as np
 import torch
+import tiktoken
 
-# 词表和编码/解码函数
-chars = None
-stoi = None
-itos = None
-vocab_size = None
+# Global tokenizer instance
+enc = None
 
 def init_tokenizer():
-    """初始化分词器，加载词表"""
-    global chars, stoi, itos, vocab_size
-    
-    # 读取莎士比亚文本
-    input_file = "data/shakespeare/input.txt"
-    with open(input_file, 'r') as f:
-        text = f.read()
-
-    # 创建字符级词表
-    chars = sorted(list(set(text)))
-    vocab_size = len(chars)  # 65 (ASCII字符)
-
-    # 创建编码/解码器
-    stoi = { ch:i for i,ch in enumerate(chars) }
-    itos = { i:ch for i,ch in enumerate(chars) }
-    
-    return vocab_size
+    """初始化分词器 (GPT-2 BPE)"""
+    global enc
+    if enc is None:
+        enc = tiktoken.get_encoding("gpt2")
+    # GPT-2 vocab size is 50257
+    return enc.n_vocab
 
 def encode(s):
     """将文本编码为token ids"""
-    if stoi is None:
+    if enc is None:
         init_tokenizer()
-    return [stoi[c] for c in s]
+    return enc.encode(s)
 
 def decode(l):
     """将token ids解码为文本"""
-    if itos is None:
+    if enc is None:
         init_tokenizer()
-    return ''.join([itos[i] for i in l])
+    return enc.decode(l)
 
 def prepare_data():
     """准备训练数据"""
@@ -46,11 +33,20 @@ def prepare_data():
     
     # 读取文本
     input_file = "data/shakespeare/input.txt"
+    if not os.path.exists(input_file):
+        print(f"Error: {input_file} not found. Please download it first.")
+        return
+
     with open(input_file, 'r') as f:
         text = f.read()
     
+    print("Encoding data with GPT-2 BPE...")
+    ids = encode(text)
+    print(f"Total tokens: {len(ids)}")
+
     # 编码并保存为二进制文件
-    data = np.array(encode(text), dtype=np.uint16)
+    # GPT-2 vocab size is 50257, which fits in uint16 (0-65535)
+    data = np.array(ids, dtype=np.uint16)
     split = int(0.9 * len(data))
     train_data = data[:split]
     val_data = data[split:]
@@ -61,7 +57,7 @@ def prepare_data():
     train_data.tofile('data/shakespeare/train.bin')
     val_data.tofile('data/shakespeare/val.bin')
     
-    return vocab_size
+    return enc.n_vocab
 
 if __name__ == "__main__":
     prepare_data()

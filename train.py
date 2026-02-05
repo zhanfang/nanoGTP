@@ -2,14 +2,14 @@ import os
 import numpy as np
 import torch
 
-from model import GPT
+from model import GPT, GPTConfig
 from prepare import init_tokenizer
 
 
 class DataLoader:
     def __init__(self, dataset, batch_size, block_size):
-        # Convert numpy memmap to PyTorch tensor
-        self.dataset = torch.from_numpy(np.array(dataset)).long()
+        # dataset should be a torch tensor already loaded in memory
+        self.dataset = dataset
         self.batch_size = batch_size
         self.block_size = block_size
     
@@ -19,7 +19,7 @@ class DataLoader:
         x = torch.stack([self.dataset[i : i + self.block_size] for i in ix])
         y = torch.stack([self.dataset[i + 1 : i + 1 + self.block_size] for i in ix])
         return x, y
-    
+
 
 def train():
     # 训练循环的占位符
@@ -37,36 +37,39 @@ def train():
     print(device)
     
     data_dir = os.path.join('data', 'shakespeare')
-    train_data = np.memmap(os.path.join(data_dir, 'train.bin'), dtype=np.uint16, mode='r')
+    # Use memmap to read file, but convert to tensor once efficiently
+    train_data_memmap = np.memmap(os.path.join(data_dir, 'train.bin'), dtype=np.uint16, mode='r')
+    train_data = torch.from_numpy(np.array(train_data_memmap)).long()
 
     # 初始化词表并获取实际的词表大小
-    vocab_size = init_tokenizer()
-    print(f"Vocabulary size: {vocab_size}")
+    # GPT-2 vocab_size is 50257, pad to 50304 for efficiency
+    raw_vocab_size = init_tokenizer()
+    vocab_size = 50304
+    print(f"Vocabulary size: {vocab_size} (padded from {raw_vocab_size})")
     
-    model = GPT(
-        vocab_size=vocab_size,
-        n_layer=n_layer,
-        n_head=n_head,
-        n_embd=n_embd,
-        block_size=block_size,
-    ).to(device)
+    model_args = dict(n_layer=n_layer, n_head=n_head, n_embd=n_embd, block_size=block_size,
+                  bias=False, vocab_size=vocab_size, dropout=0.0)
+    config = GPTConfig(**model_args)
+    model = GPT(config).to(device)
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
+    optimizer = model.configure_optimizers(weight_decay=1e-1, learning_rate=learning_rate, betas=(0.9, 0.95), device_type=device)
+    
+    # Create DataLoader instance once
+    train_loader = DataLoader(train_data, batch_size, block_size)
 
     for iter in range(max_iters):
-        xb, yb = DataLoader(train_data, batch_size, block_size).get_batch()
+        xb, yb = train_loader.get_batch()
         xb, yb = xb.to(device), yb.to(device)
 
-        logits = model(xb)
-        loss = torch.nn.functional.cross_entropy(
-            logits.view(-1, logits.size(-1)), yb.view(-1))
+        logits, loss = model(xb, yb)
         
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
         
-        print(f"Iteration {iter}, loss: {loss.item()}")
+        if iter % 100 == 0:
+            print(f"Iteration {iter}, loss: {loss.item()}")
 
     torch.save(model.state_dict(), 'model.pth')
 
