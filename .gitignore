@@ -17,6 +17,15 @@ build/
 # Training data and preprocessed files
 data/shakespeare/*.bin
 data/shakespeare/input.txt
+data/sft_demo/*.bin
+data/sft_demo/meta.pkl
+
+# Model Checkpoints and Output
+model.pth
+out/
+out-sft/
+*.pt
+*.pth
 
 # IDE settings
 .idea/
