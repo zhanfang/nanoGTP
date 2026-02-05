@@ -11,10 +11,10 @@ from datasets import load_dataset # pip install datasets
 # number of workers in .map() call
 # good number to use is ~order number of cpu cores // 2
 # Note: set to 1 to avoid "Pickler._batch_setitems" error on Python 3.12+ with some library versions
-num_proc = 1 
+num_proc = 8 
 
 # number of workers in load_dataset() call
-num_proc_load_dataset = 1
+num_proc_load_dataset = num_proc
 
 if __name__ == '__main__':
     # 1. Load the dataset
