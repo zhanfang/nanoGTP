@@ -5,6 +5,7 @@ A character-level GPT (Generative Pre-trained Transformer) model trained on Shak
 ## Project Structure
 
 ```
+├── docs/            # Project documentation
 ├── configs/         # Training configurations
 ├── data/           
 │   └── shakespeare/  # Shakespeare dataset
@@ -15,8 +16,15 @@ A character-level GPT (Generative Pre-trained Transformer) model trained on Shak
 └── requirements.txt # Project dependencies
 ```
 
+## Documentation 📚
+
+- **[Developer Guide](docs/developer_guide.md)**: Detailed architecture analysis and implementation details.
+- **[Evolution History](docs/evolution.md)**: The step-by-step optimization journey of this project.
+- **[SFT Design](docs/sft_design.md)**: Design document for the Supervised Fine-Tuning functionality.
+- **[Changelog](docs/changelog.md)**: Version history and changes.
+
 ## Project Evolution 🚀
-If you are interested in how this project evolved from a simple character-level model to a BPE-based GPT with Flash Attention and Web UI, please check out the **[Evolution Documentation](EVOLUTION.md)**.
+If you are interested in how this project evolved from a simple character-level model to a BPE-based GPT with Flash Attention and Web UI, please check out the **[Evolution Documentation](docs/evolution.md)**.
 It details the step-by-step optimization journey and the "Why" behind each technical decision.
 
 ## Setup
