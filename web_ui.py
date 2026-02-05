@@ -26,14 +26,28 @@ def load_model(path, model_name="Model"):
             return None
             
         print(f"Loading {model_name} from {path}...")
-        config = GPTConfig(**model_args)
+        
+        # Load checkpoint first to check for config
+        checkpoint = torch.load(path, map_location=device)
+        
+        # Determine model configuration
+        current_args = model_args.copy() # Default to Nano config
+        state_dict = checkpoint
+        
+        # Handle checkpoints from finetune.py which contain 'model_args' and 'model'
+        if isinstance(checkpoint, dict) and 'model_args' in checkpoint:
+            print(f"Found model_args in checkpoint for {model_name}: {checkpoint['model_args']}")
+            # Update defaults with checkpoint args, ensuring required keys exist
+            for k, v in checkpoint['model_args'].items():
+                if k in current_args:
+                    current_args[k] = v
+            state_dict = checkpoint['model']
+        elif isinstance(checkpoint, dict) and 'model' in checkpoint:
+             # Case where 'model' key exists but 'model_args' might be missing (unlikely for finetune.py but possible)
+             state_dict = checkpoint['model']
+
+        config = GPTConfig(**current_args)
         model = GPT(config).to(device)
-        
-        state_dict = torch.load(path, map_location=device)
-        
-        # Handle checkpoints from finetune.py which wrap state_dict in 'model' key
-        if 'model' in state_dict:
-            state_dict = state_dict['model']
             
         # Handle migration if needed
         if 'token_embeddings.weight' in state_dict:
