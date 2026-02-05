@@ -21,20 +21,28 @@ class DataLoader:
         return x, y
 
 
+
+# -----------------------------------------------------------------------------
+# default config values
+batch_size = 64
+block_size = 256
+n_embd = 384
+n_head = 6
+n_layer = 6
+learning_rate = 3e-4
+max_iters = 5000
+eval_interval = 100
+log_interval = 10
+always_save_checkpoint = False
+# -----------------------------------------------------------------------------
+config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str))]
+exec(open('configurator.py').read()) # overrides from command line or config file
+config = {k: globals()[k] for k in config_keys} # will be useful for logging
+# -----------------------------------------------------------------------------
+
 def train():
-    # 训练循环的占位符
-    batch_size = 64
-    block_size = 256
-
-    n_embd = 384
-    n_head = 6
-    n_layer = 6
-    learning_rate = 3e-4
-    max_iters = 5000
-
     device = 'mps' if torch.backends.mps.is_available() else 'cpu'
-
-    print(device)
+    print(f"Using device: {device}")
     
     data_dir = os.path.join('data', 'shakespeare')
     # Use memmap to read file, but convert to tensor once efficiently
@@ -68,9 +76,10 @@ def train():
         optimizer.step()
 
         
-        if iter % 100 == 0:
+        if iter % log_interval == 0:
             print(f"Iteration {iter}, loss: {loss.item()}")
 
+    print("Saving model to model.pth")
     torch.save(model.state_dict(), 'model.pth')
 
 if __name__ == "__main__":
