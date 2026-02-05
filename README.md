@@ -15,6 +15,10 @@ A character-level GPT (Generative Pre-trained Transformer) model trained on Shak
 └── requirements.txt # Project dependencies
 ```
 
+## Project Evolution 🚀
+If you are interested in how this project evolved from a simple character-level model to a BPE-based GPT with Flash Attention and Web UI, please check out the **[Evolution Documentation](EVOLUTION.md)**.
+It details the step-by-step optimization journey and the "Why" behind each technical decision.
+
 ## Setup
 
 1. Create a virtual environment and activate it:
